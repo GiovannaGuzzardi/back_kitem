@@ -330,10 +330,20 @@ def api_root(request):
             "receita_ingrediente": "/receita_ingredientes/<int:pk>/",
             "favoritos": "/favoritos/",
             "favorito": "/favoritos/<int:pk>/",
-            "listas_compras": "/listas_compras/",
-            "lista_compras": "/listas_compras/<int:pk>/",
-            "listas_compras_ingredientes": "/listas_compras_ingredientes/",
-            "lista_compras_ingrediente": "/listas_compras_ingredientes/<int:pk>/",
+            "lista_itens": "/lista_itens/",
+            "lista_item": "/lista_itens/<int:pk>/",
+            "lista_itens_ingredientes": "/lista_itens_ingredientes/",
+            "lista_itens_ingrediente": "/lista_itens_ingredientes/<int:pk>/",
+            "listas_compras": "/listas_compras/ [DEPRECADO]",
+            "lista_compras": "/listas_compras/<int:pk>/ [DEPRECADO]",
+            "listas_compras_ingredientes": "/listas_compras_ingredientes/ [DEPRECADO]",
+            "lista_compras_ingrediente": "/listas_compras_ingredientes/<int:pk>/ [DEPRECADO]",
+        },
+        "aviso_importante": {
+            "deprecacao": "Os endpoints com nomenclatura 'lista_compras' estão DEPRECADOS.",
+            "status": "Ainda funcionam normalmente na versão atual, mas serão removidos em futuras atualizações.",
+            "recomendacao": "Migre para os novos endpoints 'lista_itens' o mais rápido possível.",
+            "motivo": "Padronização da nomenclatura da API para melhor organização e clareza."
         }
     })
 
