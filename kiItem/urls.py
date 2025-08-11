@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.shortcuts import redirect
 from django.urls import path, include
 from . import views_api  # Importa as views do arquivo views_api.py
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -25,6 +26,7 @@ urlpatterns = [
     
     # API Root (opcional, pode ser removido se não for necessário)
     path('api/', views_api.api_root, name='api-root'),
+    path('', lambda request: redirect('api/', permanent = False)),
 
     # rota de auth
     path('api/auth/login2/', CustomTokenObtainPairView.as_view(), name='custom_token_obtain_pair'),
