@@ -317,6 +317,7 @@ def api_root(request):
             "usuarios": "/usuarios/",
             "usuario": "/usuarios/<int:pk>/",
             "usuarios_favoritos": "/usuarios/<int:id_usuario>/favoritos/",
+            "usuarios_favorito_delete": "/usuarios/<int:id_usuario>/favoritos/<int:receita_id>/ [RECOMENDADO]",
             "ingredientes": "/ingredientes/",
             "ingrediente": "/ingredientes/<int:pk>/",
             "receitas": "/receitas/",
@@ -344,6 +345,18 @@ def api_root(request):
             "status": "Ainda funcionam normalmente na versão atual, mas serão removidos em futuras atualizações.",
             "recomendacao": "Migre para os novos endpoints 'lista_itens' o mais rápido possível.",
             "motivo": "Padronização da nomenclatura da API para melhor organização e clareza."
+        },
+        "seguranca_favoritos": {
+            "endpoint_recomendado": "DELETE /usuarios/<id_usuario>/favoritos/<receita_id>/",
+            "motivo": "Garante que o usuário só pode deletar seus próprios favoritos",
+            "endpoint_legado": "DELETE /favoritos/<pk>/",
+            "aviso": "Endpoint legado ainda funciona, mas use o recomendado para maior segurança"
+        },
+        "swagger_documentation": {
+            "schema": "/api/schema/",
+            "swagger_ui": "/api/docs/",
+            "redoc": "/api/redoc/",
+            "descricao": "Documentação interativa da API com Swagger/OpenAPI"
         }
     })
 

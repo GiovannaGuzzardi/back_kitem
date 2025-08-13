@@ -1,5 +1,5 @@
 """
-WSGI config for kiItem project.
+WSGI config for Kitem project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
