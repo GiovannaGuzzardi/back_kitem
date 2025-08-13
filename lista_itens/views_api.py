@@ -26,9 +26,13 @@ class ListaItensListCreateAPIView(generics.ListCreateAPIView):
     queryset = ListaItens.objects.all()
     serializer_class = ListaItensSerializer
 
-class ListaItensRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+class ListaItensRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateAPIView):
+    """
+    API View para recuperar e atualizar listas de itens.
+    """
     queryset = ListaItens.objects.all()
     serializer_class = ListaItensSerializer
+    
     def get_object(self):
         try:
             return ListaItens.objects.get(pk=self.kwargs['pk'])
@@ -36,6 +40,15 @@ class ListaItensRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIVi
             raise NotFound(detail="Lista de itens não encontrada.")
         except Exception as e:
             raise NotFound(detail=f"Erro inesperado: {str(e)}")
+    
+    def delete(self, request, *args, **kwargs):
+        """
+        Impede a exclusão de listas conforme regra de negócio.
+        """
+        return Response(
+            {"error": "Listas de itens não podem ser excluídas. Apenas ingredientes podem ser removidos."},
+            status=405  # Method Not Allowed
+        )
 
 class GetListaItensUsuario(generics.ListAPIView):
     serializer_class = ListaItensSerializer
@@ -206,9 +219,30 @@ class ListaComprasListCreateAPIView(ListaItensListCreateAPIView):
     """Alias para compatibilidade com API anterior"""
     pass
 
-class ListaComprasRetrieveUpdateDestroyAPIView(ListaItensRetrieveUpdateDestroyAPIView):
-    """Alias para compatibilidade com API anterior"""
-    pass
+class ListaComprasRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateAPIView):
+    """
+    Alias para compatibilidade com API anterior.
+    DELETE não é permitido conforme regra de negócio - listas não podem ser excluídas.
+    """
+    queryset = ListaItens.objects.all()
+    serializer_class = ListaItensSerializer
+    
+    def get_object(self):
+        try:
+            return ListaItens.objects.get(pk=self.kwargs['pk'])
+        except ListaItens.DoesNotExist:
+            raise NotFound(detail="Lista de itens não encontrada.")
+        except Exception as e:
+            raise NotFound(detail=f"Erro inesperado: {str(e)}")
+    
+    def delete(self, request, *args, **kwargs):
+        """
+        Impede a exclusão de listas conforme regra de negócio.
+        """
+        return Response(
+            {"error": "Listas de itens não podem ser excluídas. Apenas ingredientes podem ser removidos."},
+            status=405  # Method Not Allowed
+        )
 
 class GetListaComprasUsuario(GetListaItensUsuario):
     """Alias para compatibilidade com API anterior"""
