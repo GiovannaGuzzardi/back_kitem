@@ -1,5 +1,5 @@
 """
-URL configuration for kiItem project.
+URL configuration for Kitem project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.2/topics/http/urls/
@@ -20,6 +20,7 @@ from django.urls import path, include
 from . import views_api  # Importa as views do arquivo views_api.py
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views_api import CustomTokenObtainPairView
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -42,4 +43,9 @@ urlpatterns = [
     path('api/', include('receita.urls')),
     path('api/', include('favorito.urls')),
     path('api/', include('lista_itens.urls')),
+    
+    # Swagger/OpenAPI Documentation
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]

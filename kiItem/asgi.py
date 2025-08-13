@@ -1,5 +1,5 @@
 """
-ASGI config for kiItem project.
+ASGI config for Kitem project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
