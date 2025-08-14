@@ -100,7 +100,7 @@ class FavoritoRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
     tags=['favoritos'],
     parameters=[
         OpenApiParameter(
-            name='user_id',
+            name='id_usuario',
             location=OpenApiParameter.PATH,
             description='ID do usuário',
             required=True,
@@ -113,8 +113,8 @@ class GetFavoritoUsuario(generics.ListAPIView):
     serializer_class = FavoritoSerializer
 
     def get_queryset(self):
-        user_id = self.kwargs['user_id']  # Pega o valor <user_id> da URL
-        return Favorito.objects.filter(id_usuario=user_id)
+        id_usuario = self.kwargs['id_usuario']  # Pega o valor <id_usuario> da URL
+        return Favorito.objects.filter(id_usuario=id_usuario)
 
 @extend_schema(
     summary="Obter favoritos detalhados de um usuário",
@@ -122,7 +122,7 @@ class GetFavoritoUsuario(generics.ListAPIView):
     tags=['favoritos'],
     parameters=[
         OpenApiParameter(
-            name='user_id',
+            name='id_usuario',
             location=OpenApiParameter.PATH,
             description='ID do usuário',
             required=True,
@@ -153,9 +153,9 @@ class GetFavoritoUsuario(generics.ListAPIView):
     }
 )
 class FavoritoDetalhadoAPIView(APIView):
-    def get(self, request, user_id):
+    def get(self, request, id_usuario):
         try:
-            favoritos = Favorito.objects.filter(id_usuario=user_id).select_related('id_receita')
+            favoritos = Favorito.objects.filter(id_usuario=id_usuario).select_related('id_receita')
             
             if not favoritos.exists():
                 return Response({"message": "Nenhum favorito encontrado para este usuário."}, status=404)
@@ -183,7 +183,7 @@ class FavoritoDetalhadoAPIView(APIView):
     tags=['favoritos'],
     parameters=[
         OpenApiParameter(
-            name='user_id',
+            name='id_usuario',
             location=OpenApiParameter.PATH,
             description='ID do usuário',
             required=True,
@@ -227,7 +227,7 @@ class FavoritoFilterAPIView(APIView):
     """
     Endpoint para filtrar favoritos de um usuário com base em critérios da receita.
     """
-    def get(self, request, user_id):
+    def get(self, request, id_usuario):
         tipo = request.query_params.get('tipo')
         dificuldade = request.query_params.get('dificuldade')
         search = request.query_params.get('search')  # Campo de pesquisa para o título da receita
@@ -243,7 +243,7 @@ class FavoritoFilterAPIView(APIView):
             raise ValidationError({"dificuldade": f"Dificuldade inválida. Valores permitidos: {', '.join(valid_dificuldades)}"})
 
         # Construção do filtro dinâmico
-        filtros = Q(id_usuario=user_id)
+        filtros = Q(id_usuario=id_usuario)
         if tipo:
             filtros &= Q(id_receita__tipo__iexact=tipo)
         if dificuldade:
@@ -269,7 +269,7 @@ class FavoritoFilterAPIView(APIView):
     tags=['favoritos'],
     parameters=[
         OpenApiParameter(
-            name='user_id',
+            name='id_usuario',
             location=OpenApiParameter.PATH,
             description='ID do usuário',
             required=True,
@@ -303,10 +303,10 @@ class FavoritoToggleAPIView(APIView):
     """
     Endpoint para adicionar ou remover uma receita dos favoritos de um usuário.
     """
-    def post(self, request, user_id, receita_id):
+    def post(self, request, id_usuario, receita_id):
         try:
             # Verifica se já existe
-            favorito_existente = Favorito.objects.filter(id_usuario=user_id, id_receita=receita_id).first()
+            favorito_existente = Favorito.objects.filter(id_usuario=id_usuario, id_receita=receita_id).first()
             
             if favorito_existente:
                 # Remove dos favoritos
@@ -314,7 +314,7 @@ class FavoritoToggleAPIView(APIView):
                 return Response({"message": "Receita removida dos favoritos."}, status=200)
             else:
                 # Adiciona aos favoritos
-                favorito = Favorito.objects.create(id_usuario_id=user_id, id_receita_id=receita_id)
+                favorito = Favorito.objects.create(id_usuario_id=id_usuario, id_receita_id=receita_id)
                 serializer = FavoritoSerializer(favorito)
                 return Response({
                     "message": "Receita adicionada aos favoritos.",
