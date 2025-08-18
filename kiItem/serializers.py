@@ -62,6 +62,22 @@ class UsuarioSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+    def update(self, instance, validated_data):
+        # Tratamento especial para a senha durante a atualização
+        password = validated_data.pop('password', None)
+        
+        # Atualiza os outros campos normalmente
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        # Se uma nova senha foi fornecida, criptografa antes de salvar
+        if password:
+            instance.set_password(password)
+        
+        # Salva as alterações no banco
+        instance.save()
+        return instance
+
 
 # Serializer para o modelo Ingrediente
 class IngredienteSerializer(serializers.ModelSerializer):
