@@ -72,7 +72,11 @@ class UsuarioSerializer(serializers.ModelSerializer):
         
         # Se uma nova senha foi fornecida, criptografa antes de salvar
         if password:
-            instance.set_password(password)
+            # Validação adicional: senha não pode estar vazia
+            if password.strip():  # Garante que não seja só espaços
+                instance.set_password(password)
+            else:
+                raise serializers.ValidationError({"password": "A senha não pode estar vazia."})
         
         # Salva as alterações no banco
         instance.save()
