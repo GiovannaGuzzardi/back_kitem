@@ -16,13 +16,21 @@ python manage.py runserver -> rodar back-end localmente em modo de desenvolvedor
 Nesse projeto foi utilizada a arquitetura **Django REST Framework (DRF) modularizada por apps** que torna o codigo organizado e escalável.
 
 Kitem/
+
 ├── favorito/            # App de gerenciamento de favoritos
+
 ├── ingrediente/         # App de gerenciamento de ingredientes
+
 ├── KiItem/              # App principal e configurações do projeto
+
 ├── lista_itens/         # App de gerenciamento de listas de itens
+
 ├── receita/             # App de gerenciamento de receitas
+
 ├── manage.py            # Script de gerenciamento do Django
+
 ├── requirements.txt     # Dependências do projeto
+
 └── SWAGGER_README.md    # Documentação detalhada da API (Swagger)
 
 ## A estrutura é composta por:
