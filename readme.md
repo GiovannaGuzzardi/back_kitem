@@ -1,10 +1,15 @@
-<!-- criar projeto -->
+# criar projeto
 python -m django startproject Kitem 
 pip install pygments 
-.\env\Scripts\Activate.ps1
-python -m venv env
 pip install djangorestframework
-python manage.py startapp Kitem
-python manage.py migrate Kitem
-python manage.py makemigrations Kitem 
-python manage.py runserver
+
+# venv -> ambiente virtual
+python -m venv env
+.\env\Scripts\Activate.ps1
+
+# comandos basicos
+python manage.py migrate Kitem -> modificações
+python manage.py makemigrations Kitem -> persistir modificações
+python manage.py runserver -> rodar back-end localmente em modo de desenvolvedor
+
+# Explicação do codigo
