@@ -44,3 +44,8 @@ O sistema está integrado a um banco de dados relacional PostgreSQL, que foi hos
 A API foi construída com o Django REST Framework (DRF), permitindo a criação de endpoints RESTful robustos e seguros, que seguem boas práticas de desenvolvimento backend. A modularização por apps facilita tanto a manutenção quanto a expansão futura do sistema, como a adição de novos módulos ou funcionalidades.
 ## swagger
 Foi adicionado um swagger para melhor visualização na hora de consumir os dados pelo front-end que esta melhor documentado no seu readme especifico
+
+## detalhes comentados pela professora
+adicionar ingrediente na parte de lista de itens -> selecionar item
+restrições-> mais de uma restrição
+separar os items por receita -> adicionar id da receita, pode modificar a quantidade
