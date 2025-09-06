@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'ingrediente',
     'receita',
     'favorito',
-    'lista_itens'
+    'lista_itens',
+    'denuncia'
 ]
 
 MIDDLEWARE = [
@@ -174,7 +175,7 @@ SIMPLE_JWT = {
 # DRF Spectacular settings
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Kitem API',
-    'DESCRIPTION': 'API completa para gerenciamento de receitas, ingredientes, favoritos e listas de compras',
+    'DESCRIPTION': 'API completa para gerenciamento de receitas, ingredientes, favoritos, listas de compras e sistema de denúncias',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'COMPONENT_SPLIT_REQUEST': True,
@@ -186,6 +187,7 @@ SPECTACULAR_SETTINGS = {
         {'name': 'receitas', 'description': 'Gerenciamento de receitas'},
         {'name': 'favoritos', 'description': 'Gerenciamento de favoritos'},
         {'name': 'listas', 'description': 'Gerenciamento de listas de itens'},
+        {'name': 'denuncias', 'description': 'Sistema de denúncias de receitas'},
     ],
     'SECURITY': [
         {'Bearer': []}

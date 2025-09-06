@@ -7,6 +7,7 @@ from ingrediente.models import Ingrediente
 from receita.models import Receita, ReceitaIngrediente
 from favorito.models import Favorito
 from lista_itens.models import ListaItens, ListaItensIngrediente
+from denuncia.models import Denuncia
 
 # Configuração do modelo de usuário
 Usuario = get_user_model()
@@ -102,6 +103,9 @@ class IngredienteSerializer(serializers.ModelSerializer):
 
 # Serializer para o modelo Receita
 class ReceitaSerializer(serializers.ModelSerializer):
+    # Campo adicional para exibir a categoria em formato legível
+    categoria_display = serializers.CharField(source='get_categoria_display', read_only=True)
+    
     class Meta:
         model = Receita
         fields = '__all__'
@@ -120,13 +124,35 @@ class ReceitaSerializer(serializers.ModelSerializer):
                 'error_messages': {
                     'blank': 'A descrição não pode estar vazia.',
                     'required': 'A descrição é obrigatória.',
-                    'max_length': 'A descrição não pode ter mais de 255 caracteres.'
+                    'max_length': 'A descrição não pode ter mais de 1500 caracteres.'
+                }
+            },
+            'categoria': {
+                'required': False,  # Campo opcional com valor padrão
+                'error_messages': {
+                    'invalid_choice': 'Categoria inválida. Escolha uma das opções disponíveis.'
                 }
             },
             'tempo_preparo': {'required': True},  # Campo obrigatório
             'dificuldade': {'required': True},  # Campo obrigatório
             'quantidade_visualizacao': {'read_only': True}  # Somente leitura
         }
+    
+    def validate_categoria(self, value):
+        """Valida se a categoria escolhida é válida"""
+        if value:
+            valid_categorias = [choice[0] for choice in Receita.CATEGORIA_CHOICES]
+            if value not in valid_categorias:
+                raise serializers.ValidationError("Categoria inválida. Escolha uma das opções disponíveis.")
+        return value
+    
+    @staticmethod
+    def get_categorias_choices():
+        """Retorna todas as categorias disponíveis"""
+        return [
+            {"codigo": codigo, "nome": nome} 
+            for codigo, nome in Receita.CATEGORIA_CHOICES
+        ]
 
 # Serializer para o modelo ReceitaIngrediente
 class ReceitaIngredienteSerializer(serializers.ModelSerializer):
@@ -211,3 +237,56 @@ class ListaComprasSerializer(ListaItensSerializer):
 class ListaComprasIngredienteSerializer(ListaItensIngredienteSerializer):
     """Alias para compatibilidade com API anterior"""
     pass
+
+# Serializer para o modelo Denuncia
+class DenunciaSerializer(serializers.ModelSerializer):
+    # Campos adicionais para exibição
+    motivo_denuncia_display = serializers.CharField(source='get_motivo_denuncia_display', read_only=True)
+    denunciante_username = serializers.CharField(source='id_denunciante.username', read_only=True)
+    receita_titulo = serializers.CharField(source='id_receita.titulo', read_only=True)
+    
+    class Meta:
+        model = Denuncia
+        fields = [
+            'unique_id',
+            'id_receita',
+            'motivo_denuncia',
+            'motivo_denuncia_display',
+            'detalhamento',
+            'id_denunciante',
+            'denunciante_username',
+            'receita_titulo',
+            'data_denuncia'
+        ]
+        extra_kwargs = {
+            'unique_id': {'read_only': True},
+            'data_denuncia': {'read_only': True},
+            'id_receita': {
+                'required': True,
+                'error_messages': {
+                    'required': 'A receita é obrigatória.',
+                    'does_not_exist': 'Receita não encontrada.'
+                }
+            },
+            'motivo_denuncia': {
+                'required': True,
+                'error_messages': {
+                    'required': 'O motivo da denúncia é obrigatório.',
+                    'invalid_choice': 'Motivo de denúncia inválido.'
+                }
+            },
+            'id_denunciante': {
+                'required': True,
+                'error_messages': {
+                    'required': 'O denunciante é obrigatório.',
+                    'does_not_exist': 'Usuário não encontrado.'
+                }
+            },
+            'detalhamento': {
+                'required': False,
+                'allow_blank': True,
+                'error_messages': {
+                    'max_length': 'O detalhamento não pode ter mais de 280 caracteres.'
+                }
+            }
+        }

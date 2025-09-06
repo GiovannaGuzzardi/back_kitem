@@ -25,6 +25,10 @@ urlpatterns = [
     # URL para receitas aleatórias
     path('receitas/aleatorias/', views_api.ReceitaAleatoriaAPIView.as_view(), name='receitas-aleatorias'),
 
+    # URLs para categorias de receitas
+    path('receitas/categorias/', views_api.ReceitaCategoriasAPIView.as_view(), name='receita-categorias'),
+    path('receitas/categoria/<str:categoria>/', views_api.ReceitaPorCategoriaAPIView.as_view(), name='receitas-por-categoria'),
+
     # URLs para ReceitaIngrediente
     path('receita_ingredientes/', views_api.ReceitaIngredienteListCreateAPIView.as_view(), name='receita-ingrediente-list-create'),
     path('receita_ingredientes/<int:pk>/', views_api.ReceitaIngredienteRetrieveUpdateDestroyAPIView.as_view(), name='receita-ingrediente-detail'),

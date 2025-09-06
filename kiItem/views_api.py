@@ -3,6 +3,7 @@ from ingrediente.models import Ingrediente
 from receita.models import Receita, ReceitaIngrediente
 from favorito.models import Favorito
 from lista_itens.models import ListaItens as ListaCompras, ListaItensIngrediente as ListaComprasIngrediente
+from denuncia.models import Denuncia
 from .serializers import (
     CustomTokenObtainPairSerializer,
     IngredienteSerializer,
@@ -12,6 +13,7 @@ from .serializers import (
     ListaComprasSerializer,
     ListaComprasIngredienteSerializer,
     UsuarioSerializer,
+    DenunciaSerializer,
 )
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
@@ -116,23 +118,29 @@ class ReceitaDetalhadaAPIView(APIView):
 
 class ReceitaFilterAPIView(APIView):
     """
-    Endpoint para filtrar receitas com base em tipo, restrição alimentar, dificuldade, tempo de preparo e pesquisa por nome.
+    Endpoint para filtrar receitas com base em tipo, categoria, restrição alimentar, dificuldade, tempo de preparo e pesquisa por nome.
     """
     def get(self, request):
         tipo = request.query_params.get('tipo')
+        categoria = request.query_params.get('categoria')  # Novo filtro por categoria
         restricoes_alimentares = request.query_params.getlist('restricao_alimentar')  # Aceita múltiplos valores
         dificuldade = request.query_params.get('dificuldade')
         tempo_preparo = request.query_params.get('tempo_preparo')
         tempo_preparo_operador = request.query_params.get('tempo_preparo_operador', 'menos')  # Padrão: "menos"
         search = request.query_params.get('search')  # Campo de pesquisa para o título da receita
         ingredientes = request.query_params.getlist('ingredientes')  # Aceita múltiplos valores para ingredientes
+        
         # Validações
         valid_tipos = ["doce", "salgado"]
         valid_dificuldades = ["Fácil", "Média", "Difícil", "Master Chef"]
         valid_operadores = ["mais", "menos"]
+        valid_categorias = [choice[0] for choice in Receita.CATEGORIA_CHOICES]
 
         if tipo and tipo not in valid_tipos:
             raise ValidationError({"tipo": f"Tipo inválido. Valores permitidos: {', '.join(valid_tipos)}"})
+
+        if categoria and categoria not in valid_categorias:
+            raise ValidationError({"categoria": f"Categoria inválida. Valores permitidos: {', '.join(valid_categorias)}"})
 
         if dificuldade and dificuldade not in valid_dificuldades:
             raise ValidationError({"dificuldade": f"Dificuldade inválida. Valores permitidos: {', '.join(valid_dificuldades)}"})
@@ -154,6 +162,8 @@ class ReceitaFilterAPIView(APIView):
         filtros = Q()
         if tipo:
             filtros &= Q(tipo__iexact=tipo)  # Combina com AND lógico
+        if categoria:
+            filtros &= Q(categoria__iexact=categoria)  # Filtro por categoria
         if restricoes_alimentares:
             restricoes_query = Q()
             for restricao in restricoes_alimentares:
@@ -225,6 +235,73 @@ class ReceitaAleatoriaAPIView(APIView):
             return Response(serializer.data)
         except Exception as e:
             return Response({"error": f"Erro ao buscar receitas aleatórias: {str(e)}"}, status=500)
+
+class ReceitaCategoriasAPIView(APIView):
+    """
+    Endpoint para listar todas as categorias disponíveis para receitas.
+    """
+    def get(self, request):
+        try:
+            categorias = [
+                {"codigo": codigo, "nome": nome} 
+                for codigo, nome in Receita.CATEGORIA_CHOICES
+            ]
+            
+            # Estatísticas por categoria (opcional)
+            estatisticas = []
+            for codigo, nome in Receita.CATEGORIA_CHOICES:
+                count = Receita.objects.filter(categoria=codigo).count()
+                estatisticas.append({
+                    "codigo": codigo,
+                    "nome": nome,
+                    "quantidade_receitas": count
+                })
+            
+            return Response({
+                "categorias": categorias,
+                "total_categorias": len(categorias),
+                "estatisticas_por_categoria": estatisticas
+            })
+        except Exception as e:
+            return Response({"error": f"Erro ao buscar categorias: {str(e)}"}, status=500)
+
+class ReceitaPorCategoriaAPIView(APIView):
+    """
+    Endpoint para listar receitas de uma categoria específica.
+    """
+    def get(self, request, categoria):
+        try:
+            # Valida se a categoria existe
+            valid_categorias = [choice[0] for choice in Receita.CATEGORIA_CHOICES]
+            if categoria not in valid_categorias:
+                return Response(
+                    {"error": f"Categoria '{categoria}' não encontrada. Categorias válidas: {', '.join(valid_categorias)}"},
+                    status=404
+                )
+            
+            # Busca receitas da categoria
+            receitas = Receita.objects.filter(categoria=categoria).select_related('id_usuario')
+            
+            if not receitas.exists():
+                categoria_nome = dict(Receita.CATEGORIA_CHOICES).get(categoria, categoria)
+                return Response({
+                    "message": f"Nenhuma receita encontrada na categoria '{categoria_nome}'.",
+                    "categoria": {"codigo": categoria, "nome": categoria_nome},
+                    "total_receitas": 0,
+                    "receitas": []
+                })
+            
+            serializer = ReceitaSerializer(receitas, many=True)
+            categoria_nome = dict(Receita.CATEGORIA_CHOICES).get(categoria, categoria)
+            
+            return Response({
+                "categoria": {"codigo": categoria, "nome": categoria_nome},
+                "total_receitas": receitas.count(),
+                "receitas": serializer.data
+            })
+            
+        except Exception as e:
+            return Response({"error": f"Erro ao buscar receitas da categoria: {str(e)}"}, status=500)
 
 # Views para a API de ReceitaIngrediente
 class ReceitaIngredienteListCreateAPIView(generics.ListCreateAPIView):
@@ -335,6 +412,12 @@ def api_root(request):
             "lista_item": "/lista_itens/<int:pk>/",
             "lista_itens_ingredientes": "/lista_itens_ingredientes/",
             "lista_itens_ingrediente": "/lista_itens_ingredientes/<int:pk>/",
+            "denuncias": "/denuncias/lista/",
+            "denuncia": "/denuncias/<uuid:unique_id>/",
+            "denuncias_por_receita": "/denuncias/receita/<int:receita_id>/",
+            "denuncias_por_usuario": "/denuncias/usuario/<int:usuario_id>/",
+            "denuncias_filtrar": "/denuncias/filtrar/",
+            "denuncias_estatisticas": "/denuncias/estatisticas/",
             "listas_compras": "/listas_compras/ [DEPRECADO]",
             "lista_compras": "/listas_compras/<int:pk>/ [DEPRECADO]",
             "listas_compras_ingredientes": "/listas_compras_ingredientes/ [DEPRECADO]",
@@ -357,8 +440,36 @@ def api_root(request):
             "swagger_ui": "/api/docs/",
             "redoc": "/api/redoc/",
             "descricao": "Documentação interativa da API com Swagger/OpenAPI"
+        },
+        "denuncias": {
+            "denuncias": "/api/denuncias/",
+            "denuncias_lista": "/api/denuncias/lista/",
+            "denuncia_detail": "/api/denuncias/<uuid>/",
+            "denuncias_por_receita": "/api/denuncias/receita/<receita_id>/",
+            "denuncias_por_usuario": "/api/denuncias/usuario/<usuario_id>/",
+            "filtrar_denuncias": "/api/denuncias/filtrar/",
+            "estatisticas_denuncias": "/api/denuncias/estatisticas/",
+            "descricao": "Sistema completo de denúncias de receitas"
         }
     })
+
+# Views para a API de Denúncias
+class DenunciaListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Denuncia.objects.all()
+    serializer_class = DenunciaSerializer
+
+class DenunciaRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Denuncia.objects.all()
+    serializer_class = DenunciaSerializer
+    lookup_field = 'unique_id'
+    
+    def get_object(self):
+        try:
+            return Denuncia.objects.get(unique_id=self.kwargs['unique_id'])
+        except Denuncia.DoesNotExist:
+            raise NotFound(detail="Denúncia não encontrada.")
+        except Exception as e:
+            raise NotFound(detail=f"Erro inesperado: {str(e)}")
 
 @api_view(['GET'])
 def root(request):

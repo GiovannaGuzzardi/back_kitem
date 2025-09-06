@@ -5,6 +5,8 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
 from django.db.models import Q
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiResponse
+from drf_spectacular.types import OpenApiTypes
 from .models import ListaItens, ListaItensIngrediente
 from kiItem.serializers import ListaItensSerializer, ListaItensIngredienteSerializer
 
@@ -22,10 +24,45 @@ def api_root(request, format=None):
     })
 
 # Views para a API de Lista Itens
+@extend_schema_view(
+    get=extend_schema(
+        tags=['listas'],
+        summary="Listar todas as listas de itens",
+        description="Retorna uma lista paginada com todas as listas de itens cadastradas."
+    ),
+    post=extend_schema(
+        tags=['listas'],
+        summary="Criar nova lista de itens",
+        description="Cria uma nova lista de itens para o usuário."
+    )
+)
 class ListaItensListCreateAPIView(generics.ListCreateAPIView):
     queryset = ListaItens.objects.all()
     serializer_class = ListaItensSerializer
 
+@extend_schema_view(
+    get=extend_schema(
+        tags=['listas'],
+        summary="Obter detalhes de uma lista de itens",
+        description="Retorna os detalhes de uma lista de itens específica."
+    ),
+    put=extend_schema(
+        tags=['listas'],
+        summary="Atualizar lista de itens completa",
+        description="Atualiza todos os campos de uma lista de itens."
+    ),
+    patch=extend_schema(
+        tags=['listas'],
+        summary="Atualizar lista de itens parcial",
+        description="Atualiza campos específicos de uma lista de itens."
+    ),
+    delete=extend_schema(
+        tags=['listas'],
+        summary="Excluir lista de itens",
+        description="Tentativa de exclusão de lista (não permitida conforme regra de negócio).",
+        responses={405: OpenApiResponse(description="Método não permitido - listas não podem ser excluídas")}
+    )
+)
 class ListaItensRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateAPIView):
     """
     API View para recuperar e atualizar listas de itens.
@@ -50,6 +87,19 @@ class ListaItensRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateAPIView):
             status=405  # Method Not Allowed
         )
 
+@extend_schema(
+    tags=['listas'],
+    summary="Listar listas de itens por usuário",
+    description="Retorna todas as listas de itens de um usuário específico.",
+    parameters=[
+        OpenApiParameter(
+            name='user_id',
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.PATH,
+            description='ID do usuário'
+        )
+    ]
+)
 class GetListaItensUsuario(generics.ListAPIView):
     serializer_class = ListaItensSerializer
 
@@ -57,6 +107,19 @@ class GetListaItensUsuario(generics.ListAPIView):
         user_id = self.kwargs['user_id']  # Pega o valor <user_id> da URL
         return ListaItens.objects.filter(id_usuario=user_id)
 
+@extend_schema(
+    tags=['listas'],
+    summary="Obter lista de itens detalhada",
+    description="Retorna uma lista de itens com todos os ingredientes e estatísticas.",
+    parameters=[
+        OpenApiParameter(
+            name='pk',
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.PATH,
+            description='ID da lista de itens'
+        )
+    ]
+)
 class ListaItensDetalhadaAPIView(APIView):
     def get(self, request, pk):
         try:

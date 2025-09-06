@@ -43,6 +43,7 @@ urlpatterns = [
     path('api/', include('receita.urls')),
     path('api/', include('favorito.urls')),
     path('api/', include('lista_itens.urls')),
+    path('api/', include('denuncia.urls')),
     
     # Swagger/OpenAPI Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

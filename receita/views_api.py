@@ -6,6 +6,8 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
 from django.db.models import Q
 from random import sample
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
+from drf_spectacular.types import OpenApiTypes
 from .models import Receita, ReceitaIngrediente
 from favorito.models import Favorito
 from kiItem.serializers import ReceitaSerializer, ReceitaIngredienteSerializer
@@ -71,6 +73,20 @@ class ReceitaDetalhadaAPIView(APIView):
         except Receita.DoesNotExist:
             raise NotFound(detail="Receita não encontrada.")
 
+@extend_schema(
+    tags=['receitas'],
+    summary="Filtrar receitas",
+    description="Filtrar receitas por tipo, restrição alimentar, dificuldade, tempo de preparo, categoria, ingredientes e pesquisa por nome.",
+    parameters=[
+        OpenApiParameter(name='tipo', type=OpenApiTypes.STR, description='Tipo da receita (doce/salgado)'),
+        OpenApiParameter(name='restricao_alimentar', type=OpenApiTypes.STR, description='Restrição alimentar'),
+        OpenApiParameter(name='dificuldade', type=OpenApiTypes.STR, description='Nível de dificuldade'),
+        OpenApiParameter(name='tempo_preparo', type=OpenApiTypes.INT, description='Tempo de preparo em minutos'),
+        OpenApiParameter(name='categoria', type=OpenApiTypes.STR, description='Categoria da receita'),
+        OpenApiParameter(name='ingredientes', type=OpenApiTypes.STR, description='Ingredientes (múltiplos valores)'),
+        OpenApiParameter(name='search', type=OpenApiTypes.STR, description='Busca por título da receita'),
+    ]
+)
 class ReceitaFilterAPIView(APIView):
     """
     Endpoint para filtrar receitas com base em tipo, restrição alimentar, dificuldade, tempo de preparo e pesquisa por nome.
@@ -83,10 +99,13 @@ class ReceitaFilterAPIView(APIView):
         tempo_preparo_operador = request.query_params.get('tempo_preparo_operador', 'menos')  # Padrão: "menos"
         search = request.query_params.get('search')  # Campo de pesquisa para o título da receita
         ingredientes = request.query_params.getlist('ingredientes')  # Aceita múltiplos valores para ingredientes
+        categoria = request.query_params.get('categoria')  # Filtro por categoria
+        
         # Validações
         valid_tipos = ["doce", "salgado"]
         valid_dificuldades = ["Fácil", "Média", "Difícil", "Master Chef"]
         valid_operadores = ["mais", "menos"]
+        valid_categorias = [choice[0] for choice in Receita.CATEGORIA_CHOICES]
 
         if tipo and tipo not in valid_tipos:
             raise ValidationError({"tipo": f"Tipo inválido. Valores permitidos: {', '.join(valid_tipos)}"})
@@ -96,6 +115,9 @@ class ReceitaFilterAPIView(APIView):
 
         if tempo_preparo_operador and tempo_preparo_operador not in valid_operadores:
             raise ValidationError({"tempo_preparo_operador": f"Operador inválido. Valores permitidos: {', '.join(valid_operadores)}"})
+
+        if categoria and categoria not in valid_categorias:
+            raise ValidationError({"categoria": f"Categoria inválida. Valores permitidos: {', '.join(valid_categorias)}"})
 
         # Validação de tempo de preparo
         if tempo_preparo:
@@ -118,6 +140,8 @@ class ReceitaFilterAPIView(APIView):
             filtros &= restricoes_query  # Adiciona ao filtro principal com AND lógico
         if dificuldade:
             filtros &= Q(dificuldade__iexact=dificuldade)
+        if categoria:
+            filtros &= Q(categoria=categoria)  # Filtro por categoria
         if tempo_preparo:
             try:
                 horas, minutos, _ = map(int, tempo_preparo.split(':'))
@@ -182,6 +206,102 @@ class ReceitaAleatoriaAPIView(APIView):
             return Response(serializer.data)
         except Exception as e:
             return Response({"error": f"Erro ao buscar receitas aleatórias: {str(e)}"}, status=500)
+
+@extend_schema(
+    tags=['receitas'],
+    summary="Listar todas as categorias de receitas",
+    description="Retorna todas as categorias disponíveis para receitas com estatísticas de uso.",
+    responses={
+        200: OpenApiResponse(
+            description="Lista de categorias com estatísticas"
+        )
+    }
+)
+class ReceitaCategoriasAPIView(APIView):
+    """
+    Endpoint para listar todas as categorias disponíveis para receitas.
+    """
+    def get(self, request):
+        try:
+            categorias = [
+                {"codigo": codigo, "nome": nome} 
+                for codigo, nome in Receita.CATEGORIA_CHOICES
+            ]
+            
+            # Estatísticas por categoria (opcional)
+            estatisticas = []
+            for codigo, nome in Receita.CATEGORIA_CHOICES:
+                count = Receita.objects.filter(categoria=codigo).count()
+                estatisticas.append({
+                    "codigo": codigo,
+                    "nome": nome,
+                    "quantidade_receitas": count
+                })
+            
+            return Response({
+                "categorias": categorias,
+                "total_categorias": len(categorias),
+                "estatisticas_por_categoria": estatisticas
+            })
+        except Exception as e:
+            return Response({"error": f"Erro ao buscar categorias: {str(e)}"}, status=500)
+
+@extend_schema(
+    tags=['receitas'],
+    summary="Listar receitas por categoria",
+    description="Retorna todas as receitas de uma categoria específica.",
+    parameters=[
+        OpenApiParameter(
+            name='categoria',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.PATH,
+            description='Código da categoria (ex: massas, carnes, sobremesas)'
+        )
+    ],
+    responses={
+        200: OpenApiResponse(
+            description="Receitas da categoria especificada"
+        ),
+        404: OpenApiResponse(description="Categoria não encontrada ou sem receitas")
+    }
+)
+class ReceitaPorCategoriaAPIView(APIView):
+    """
+    Endpoint para listar receitas de uma categoria específica.
+    """
+    def get(self, request, categoria):
+        try:
+            # Valida se a categoria existe
+            valid_categorias = [choice[0] for choice in Receita.CATEGORIA_CHOICES]
+            if categoria not in valid_categorias:
+                return Response(
+                    {"error": f"Categoria '{categoria}' não encontrada. Categorias válidas: {', '.join(valid_categorias)}"},
+                    status=404
+                )
+            
+            # Busca receitas da categoria
+            receitas = Receita.objects.filter(categoria=categoria).select_related('id_usuario')
+            
+            if not receitas.exists():
+                categoria_nome = dict(Receita.CATEGORIA_CHOICES).get(categoria, categoria)
+                return Response({
+                    "message": f"Nenhuma receita encontrada na categoria '{categoria_nome}'.",
+                    "categoria": {"codigo": categoria, "nome": categoria_nome},
+                    "total_receitas": 0,
+                    "receitas": []
+                })
+            
+            serializer = ReceitaSerializer(receitas, many=True)
+            categoria_nome = dict(Receita.CATEGORIA_CHOICES).get(categoria, categoria)
+            
+            return Response({
+                "categoria": {"codigo": categoria, "nome": categoria_nome},
+                "total_receitas": receitas.count(),
+                "receitas": serializer.data
+            })
+            
+        except Exception as e:
+            return Response({"error": f"Erro ao buscar receitas da categoria: {str(e)}"}, status=500)
 
 # Views para a API de ReceitaIngrediente
 class ReceitaIngredienteListCreateAPIView(generics.ListCreateAPIView):
