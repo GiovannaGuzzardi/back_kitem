@@ -85,7 +85,9 @@ WSGI_APPLICATION = 'kiItem.wsgi.application'
 CORS_ALLOWED_ORIGINS = [
     "https://kitem.onrender.com",  # URL de produção do seu frontend
     "http://localhost:5173",       # URL local -> funcionando
-    "https://www.kitem.onrender.com"
+    "https://www.kitem.onrender.com",
+    "https://www.4alltests.com.br/"
+    "https://www.4alltests.com.br"
 ]
 
 CORS_ALLOWED_HEADERS = [

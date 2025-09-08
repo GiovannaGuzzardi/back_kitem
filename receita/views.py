@@ -31,3 +31,19 @@ class ReceitaViewSet(viewsets.ModelViewSet):
 class ReceitaIngredienteViewSet(viewsets.ModelViewSet):
     queryset = ReceitaIngrediente.objects.all()
     serializer_class = ReceitaIngredienteSerializer
+
+from django.http import JsonResponse
+from django.db import connection
+from django.db.utils import OperationalError
+
+def health_check(request):
+    try:
+        # Tenta fazer a consulta mais simples possível ao banco de dados
+        connection.cursor()
+        return JsonResponse({"status": "ok", "message": "Conexão com o banco de dados bem-sucedida!"})
+    except OperationalError as e:
+        # Se falhar, retorna o erro exato
+        return JsonResponse({"status": "error", "message": f"Não foi possível conectar ao banco de dados: {str(e)}"}, status=500)
+    except Exception as e:
+        # Pega qualquer outro erro inesperado
+        return JsonResponse({"status": "error", "message": f"Ocorreu um erro inesperado: {str(e)}"}, status=500)

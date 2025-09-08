@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views_api  # Importa as views do arquivo views_api.py
 from rest_framework.routers import DefaultRouter
-from .views import ReceitaViewSet, ReceitaIngredienteViewSet
+from .views import ReceitaViewSet, ReceitaIngredienteViewSet, health_check
 
 router = DefaultRouter()
 router.register(r'receitas', ReceitaViewSet)
@@ -10,7 +10,7 @@ router.register(r'receita-ingredientes', ReceitaIngredienteViewSet)
 urlpatterns = [
     # API Root (opcional)
     path('', views_api.api_root, name='receita-api-root'),
-
+    path('api/health-check/', health_check, name='health-check'),
     # URLs para Receitas
     path('receitas/', views_api.ReceitaListCreateAPIView.as_view(), name='receita-list-create'),
     path('receitas/<int:pk>/', views_api.ReceitaRetrieveUpdateDestroyAPIView.as_view(), name='receita-detail'),
