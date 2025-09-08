@@ -84,8 +84,29 @@ WSGI_APPLICATION = 'kiItem.wsgi.application'
 
 CORS_ALLOWED_ORIGINS = [
     "https://kitem.onrender.com",  # URL de produção do seu frontend
-    "http://localhost:5173",       # Exemplo, verifique a porta do seu frontend local
-    "http://127.0.0.1:8000",       # Exemplo, se você precisar
+    "http://localhost:5173",       # URL local -> funcionando
+    "https://www.kitem.onrender.com"
+]
+
+CORS_ALLOWED_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',  # Essencial se você usa autenticação (JWT)
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+CORS_ALLOWED_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
 ]
 
 # Configuração de banco de dados
@@ -208,6 +229,7 @@ SPECTACULAR_SETTINGS = {
         'name': 'MIT License',
     },
 }
+
 
 CORS_ALLOW_CREDENTIALS = True
 
