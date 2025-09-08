@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-rn5oqb*lylx$xxyhd973dcdp2+@il(@avs+8ndga9&9^39887b
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.x.x', 'back-kitem-e12u.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'back-kitem-e12u.onrender.com']
 
 
 # Application definition
@@ -43,18 +43,21 @@ INSTALLED_APPS = [
     'receita',
     'favorito',
     'lista_itens',
-    'denuncia'
+    'denuncia',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',  # Comentado para APIs REST
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
 
 ROOT_URLCONF = 'kiItem.urls'
 
@@ -79,6 +82,11 @@ WSGI_APPLICATION = 'kiItem.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+CORS_ALLOWED_ORIGINS = [
+    "https://kitem.onrender.com",  # URL de produção do seu frontend
+    "http://localhost:5173",       # Exemplo, verifique a porta do seu frontend local
+    "http://127.0.0.1:8000",       # Exemplo, se você precisar
+]
 
 # Configuração de banco de dados
 # PostgreSQL para produção
@@ -201,11 +209,6 @@ SPECTACULAR_SETTINGS = {
     },
 }
 
-# Configurações para desenvolvimento - permitir acesso de qualquer origem
-ALLOWED_HOSTS = ['*']  # Permitir qualquer host para desenvolvimento
-
-# CORS settings (se precisar instalar django-cors-headers no futuro)
-CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 # Configurações adicionais para desenvolvimento
